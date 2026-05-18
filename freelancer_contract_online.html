@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>عقد خدمات مستقلة</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --navy: #0f2240;
+    --navy-mid: #1a3560;
+    --navy-light: #2a4a7a;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --cream: #faf8f4;
+    --cream-dark: #f0ece3;
+    --text: #1a1a2e;
+    --text-muted: #6b7280;
+    --border: #d4c9b0;
+    --white: #ffffff;
+    --success: #16a34a;
+    --error: #dc2626;
+    --shadow: 0 4px 24px rgba(15,34,64,0.12);
+    --shadow-lg: 0 12px 48px rgba(15,34,64,0.18);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Cairo', 'Noto Naskh Arabic', sans-serif;
+    background: #0a1628;
+    min-height: 100vh;
+    color: var(--text);
+    direction: rtl;
+  }
+
+  /* ── Page Wrapper ── */
+  .page-bg {
+    background: radial-gradient(ellipse at 20% 20%, #1a3560 0%, #0a1628 50%, #050d1a 100%);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .page-bg::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: repeating-linear-gradient(
+      45deg, transparent, transparent 60px,
+      rgba(201,168,76,0.02) 60px, rgba(201,168,76,0.02) 61px
+    );
+    pointer-events: none;
+  }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* ── Steps Progress ── */
+  .progress-bar {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 2rem;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50px;
+    padding: 0.5rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(201,168,76,0.2);
+  }
+  .step-btn {
+    flex: 1;
+    padding: 0.65rem 1rem;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.4);
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: 40px;
+    cursor: pointer;
+    transition: all 0.3s;
+    white-space: nowrap;
+    direction: rtl;
+  }
+  .step-btn.active {
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: var(--navy);
+    box-shadow: 0 2px 12px rgba(201,168,76,0.4);
+  }
+  .step-btn.done {
+    color: var(--gold-light);
+  }
+  .step-btn.done::before { content: '✓ '; }
+
+  /* ── Card ── */
+  .card {
+    background: var(--cream);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    border: 1px solid rgba(201,168,76,0.3);
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+  .card.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Card Header ── */
+  .card-header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 60%, var(--navy-light) 100%);
+    padding: 2rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .card-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(201,168,76,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .card-header h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--gold-light);
+    margin-bottom: 0.3rem;
+  }
+  .card-header p {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.9rem;
+  }
+  .step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px; height: 32px;
+    background: var(--gold);
+    color: var(--navy);
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-left: 0.75rem;
+    float: right;
+  }
+
+  /* ── Card Body ── */
+  .card-body { padding: 2rem 2.5rem; }
+
+  /* ── Form Grid ── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+  }
+  .form-grid .full { grid-column: 1 / -1; }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .field label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--navy-mid);
+    letter-spacing: 0.01em;
+  }
+  .field label .req { color: var(--gold); margin-right: 2px; }
+
+  .field input, .field select, .field textarea {
+    padding: 0.7rem 0.9rem;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: 'Cairo', 'Noto Naskh Arabic', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text);
+    background: var(--white);
+    transition: all 0.2s;
+    direction: rtl;
+    text-align: right;
+    width: 100%;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.15);
+  }
+  .field textarea { resize: vertical; min-height: 80px; }
+
+  /* ── Section Divider ── */
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1.5rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--cream-dark);
+  }
+  .section-title h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .section-title .dot {
+    width: 8px; height: 8px;
+    background: var(--gold);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── Contract Preview (Step 3) ── */
+  .contract-preview {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 2rem;
+    font-family: 'Noto Naskh Arabic', serif;
+    font-size: 0.92rem;
+    line-height: 1.9;
+    color: var(--text);
+    direction: rtl;
+    text-align: right;
+  }
+  .contract-preview h1 {
+    text-align: center;
+    font-size: 1.4rem;
+    color: var(--navy);
+    margin-bottom: 0.3rem;
+    font-weight: 700;
+  }
+  .contract-preview .subtitle {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+  .contract-preview hr { border: none; border-top: 2px solid var(--navy); margin: 1rem 0; }
+  .contract-preview .hr-light { border-top: 1px solid var(--border); margin: 0.8rem 0; }
+  .contract-preview .art-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--navy-mid);
+    margin: 1rem 0 0.4rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--cream-dark);
+  }
+  .contract-preview .parties-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.8rem 0;
+    font-size: 0.88rem;
+  }
+  .contract-preview .parties-table td {
+    padding: 0.45rem 0.75rem;
+    border: 1px solid var(--border);
+  }
+  .contract-preview .parties-table td:first-child {
+    font-weight: 700;
+    background: var(--cream-dark);
+    width: 40%;
+    color: var(--navy-mid);
+  }
+  .contract-preview .highlight {
+    background: rgba(201,168,76,0.12);
+    border-right: 3px solid var(--gold);
+    padding: 0.4rem 0.75rem;
+    border-radius: 0 6px 6px 0;
+    margin: 0.4rem 0;
+    font-size: 0.88rem;
+  }
+  .contract-preview .sig-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+  }
+  .contract-preview .sig-table td {
+    width: 50%;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    text-align: center;
+    vertical-align: top;
+  }
+  .contract-preview .sig-title {
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+  }
+  .contract-preview .sig-area {
+    height: 70px;
+    border: 1.5px dashed var(--border);
+    border-radius: 6px;
+    margin: 0.5rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .sig-img { max-width: 100%; max-height: 65px; }
+
+  /* ── Signature Pad ── */
+  .sig-pad-wrap {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+  }
+  .sig-pad-wrap canvas {
+    width: 100%;
+    display: block;
+    cursor: crosshair;
+    touch-action: none;
+  }
+  .sig-pad-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    background: var(--cream-dark);
+    border-top: 1px solid var(--border);
+  }
+  .sig-pad-actions span {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+  .sig-pad-actions button {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.3rem 0.8rem;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.8rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.2s;
+  }
+  .sig-pad-actions button:hover { border-color: var(--error); color: var(--error); }
+
+  /* ── Photo Upload ── */
+  .photo-upload-area {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--white);
+    position: relative;
+  }
+  .photo-upload-area:hover {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.04);
+  }
+  .photo-upload-area input[type=file] {
+    position: absolute; inset: 0;
+    opacity: 0; cursor: pointer;
+    width: 100%; height: 100%;
+  }
+  .photo-upload-area .icon { font-size: 2rem; margin-bottom: 0.5rem; }
+  .photo-upload-area p { font-size: 0.85rem; color: var(--text-muted); }
+  .photo-upload-area .hint { font-size: 0.75rem; color: var(--border); margin-top: 0.25rem; }
+  .photo-preview-wrap {
+    display: none;
+    margin-top: 1rem;
+    position: relative;
+    text-align: center;
+  }
+  .photo-preview-wrap img {
+    max-height: 200px;
+    max-width: 100%;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+  }
+  .photo-remove {
+    position: absolute;
+    top: -8px; left: -8px;
+    width: 24px; height: 24px;
+    background: var(--error);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 14px;
+    cursor: pointer;
+    line-height: 24px;
+    text-align: center;
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--navy), var(--navy-light));
+    color: var(--gold-light);
+    box-shadow: 0 4px 14px rgba(15,34,64,0.3);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(15,34,64,0.4);
+  }
+  .btn-gold {
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: var(--navy);
+    box-shadow: 0 4px 14px rgba(201,168,76,0.3);
+  }
+  .btn-gold:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(201,168,76,0.45);
+  }
+  .btn-outline {
+    background: transparent;
+    border: 2px solid var(--border);
+    color: var(--text-muted);
+  }
+  .btn-outline:hover { border-color: var(--navy); color: var(--navy); }
+
+  .card-footer {
+    padding: 1.25rem 2.5rem;
+    background: var(--cream-dark);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  /* ── Services checkbox ── */
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+  }
+  .service-item {
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    background: var(--white);
+  }
+  .service-item:hover { border-color: var(--gold); }
+  .service-item input { display: none; }
+  .service-item.checked {
+    border-color: var(--navy-mid);
+    background: rgba(26,53,96,0.06);
+  }
+  .service-item .svc-icon { font-size: 1.4rem; margin-bottom: 0.3rem; }
+  .service-item .svc-name { font-size: 0.82rem; font-weight: 600; color: var(--navy); }
+
+  /* ── Payment type ── */
+  .pay-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+  .pay-option {
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--white);
+  }
+  .pay-option input { display: none; }
+  .pay-option.checked { border-color: var(--gold); background: rgba(201,168,76,0.07); }
+  .pay-option .p-icon { font-size: 1.3rem; }
+  .pay-option .p-text { font-size: 0.85rem; font-weight: 600; color: var(--navy); }
+
+  /* ── Alert ── */
+  .alert {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  .alert-info { background: rgba(26,53,96,0.08); border: 1px solid rgba(26,53,96,0.2); color: var(--navy-mid); }
+  .alert-success { background: rgba(22,163,74,0.08); border: 1px solid rgba(22,163,74,0.2); color: var(--success); }
+
+  /* ── Success Screen ── */
+  .success-screen {
+    text-align: center;
+    padding: 3rem 2rem;
+  }
+  .success-icon {
+    width: 80px; height: 80px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin: 0 auto 1.5rem;
+    box-shadow: 0 8px 24px rgba(201,168,76,0.4);
+  }
+  .success-screen h2 { font-size: 1.5rem; color: var(--navy); font-weight: 700; margin-bottom: 0.5rem; }
+  .success-screen p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .services-grid { grid-template-columns: 1fr 1fr; }
+    .pay-options { grid-template-columns: 1fr; }
+    .card-body, .card-header, .card-footer { padding: 1.25rem; }
+    .progress-bar { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+<div class="page-bg">
+<div class="container">
+
+  <!-- Progress -->
+  <div class="progress-bar">
+    <button class="step-btn active" onclick="goStep(1)" id="sbtn1">بيانات الأطراف</button>
+    <button class="step-btn" onclick="goStep(2)" id="sbtn2">تفاصيل العقد</button>
+    <button class="step-btn" onclick="goStep(3)" id="sbtn3">مراجعة العقد</button>
+    <button class="step-btn" onclick="goStep(4)" id="sbtn4">التوقيع</button>
+  </div>
+
+  <!-- ══ STEP 1: Parties ══ -->
+  <div class="card active" id="step1">
+    <div class="card-header">
+      <div class="step-number">1</div>
+      <h2>بيانات الأطراف</h2>
+      <p>معلومات صاحب العمل والمستقل</p>
+    </div>
+    <div class="card-body">
+
+      <div class="section-title">
+        <div class="dot"></div>
+        <h3>صاحب العمل (الطرف الأول)</h3>
+      </div>
+      <div class="form-grid">
+        <div class="field full">
+          <label>الاسم الكامل / اسم الشركة <span class="req">*</span></label>
+          <input type="text" id="p1_name" placeholder="مثال: شركة رؤية للإعلام">
+        </div>
+        <div class="field">
+          <label>رقم الهوية / السجل التجاري</label>
+          <input type="text" id="p1_id" placeholder="...">
+        </div>
+        <div class="field">
+          <label>رقم الهاتف</label>
+          <input type="text" id="p1_phone" placeholder="+962 ...">
+        </div>
+        <div class="field full">
+          <label>البريد الإلكتروني</label>
+          <input type="email" id="p1_email" placeholder="email@example.com" dir="ltr" style="text-align:left">
+        </div>
+        <div class="field full">
+          <label>العنوان</label>
+          <input type="text" id="p1_address" placeholder="المدينة، الدولة">
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top:2rem">
+        <div class="dot"></div>
+        <h3>المستقل (الطرف الثاني)</h3>
+      </div>
+      <div class="form-grid">
+        <div class="field full">
+          <label>الاسم الكامل <span class="req">*</span></label>
+          <input type="text" id="p2_name" placeholder="اسمك الكامل">
+        </div>
+        <div class="field">
+          <label>رقم الهوية</label>
+          <input type="text" id="p2_id" placeholder="...">
+        </div>
+        <div class="field">
+          <label>رقم الهاتف / واتساب</label>
+          <input type="text" id="p2_phone" placeholder="+962 ...">
+        </div>
+        <div class="field full">
+          <label>البريد الإلكتروني</label>
+          <input type="email" id="p2_email" placeholder="email@example.com" dir="ltr" style="text-align:left">
+        </div>
+        <div class="field full">
+          <label>العنوان</label>
+          <input type="text" id="p2_address" placeholder="المدينة، الدولة">
+        </div>
+      </div>
+
+      <!-- صورة الهوية -->
+      <div class="section-title" style="margin-top:2rem">
+        <div class="dot"></div>
+        <h3>صور الهوية / الوثائق (اختياري)</h3>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>صورة هوية صاحب العمل</label>
+          <div class="photo-upload-area" onclick="document.getElementById('id1_file').click()">
+            <input type="file" id="id1_file" accept="image/*" onchange="previewPhoto(this,'prev1')">
+            <div class="icon">📄</div>
+            <p>انقر لرفع الصورة</p>
+            <p class="hint">JPG, PNG - حتى 5MB</p>
+          </div>
+          <div class="photo-preview-wrap" id="prev1">
+            <button class="photo-remove" onclick="removePhoto('prev1','id1_file')">×</button>
+            <img id="prev1_img" src="" alt="معاينة">
+          </div>
+        </div>
+        <div class="field">
+          <label>صورة هوية المستقل</label>
+          <div class="photo-upload-area" onclick="document.getElementById('id2_file').click()">
+            <input type="file" id="id2_file" accept="image/*" onchange="previewPhoto(this,'prev2')">
+            <div class="icon">📄</div>
+            <p>انقر لرفع الصورة</p>
+            <p class="hint">JPG, PNG - حتى 5MB</p>
+          </div>
+          <div class="photo-preview-wrap" id="prev2">
+            <button class="photo-remove" onclick="removePhoto('prev2','id2_file')">×</button>
+            <img id="prev2_img" src="" alt="معاينة">
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="card-footer">
+      <span style="font-size:0.8rem;color:var(--text-muted)">الحقول التي عليها * إلزامية</span>
+      <button class="btn btn-primary" onclick="goStep(2)">التالي ← تفاصيل العقد</button>
+    </div>
+  </div>
+
+  <!-- ══ STEP 2: Contract Details ══ -->
+  <div class="card" id="step2">
+    <div class="card-header">
+      <div class="step-number">2</div>
+      <h2>تفاصيل العقد</h2>
+      <p>نوع الخدمات، المدة، والأتعاب</p>
+    </div>
+    <div class="card-body">
+
+      <div class="section-title">
+        <div class="dot"></div>
+        <h3>الخدمات المتفق عليها</h3>
+      </div>
+      <div class="services-grid">
+        <label class="service-item checked" id="svc_design">
+          <input type="checkbox" id="svc_design_cb" checked onchange="toggleSvc('svc_design')">
+          <div class="svc-icon">🎨</div>
+          <div class="svc-name">تصميم جرافيك</div>
+        </label>
+        <label class="service-item checked" id="svc_video">
+          <input type="checkbox" id="svc_video_cb" checked onchange="toggleSvc('svc_video')">
+          <div class="svc-icon">🎬</div>
+          <div class="svc-name">مونتاج فيديو</div>
+        </label>
+        <label class="service-item checked" id="svc_content">
+          <input type="checkbox" id="svc_content_cb" checked onchange="toggleSvc('svc_content')">
+          <div class="svc-icon">📱</div>
+          <div class="svc-name">إدارة محتوى</div>
+        </label>
+        <label class="service-item" id="svc_photo">
+          <input type="checkbox" id="svc_photo_cb" onchange="toggleSvc('svc_photo')">
+          <div class="svc-icon">📸</div>
+          <div class="svc-name">تصوير</div>
+        </label>
+        <label class="service-item" id="svc_brand">
+          <input type="checkbox" id="svc_brand_cb" onchange="toggleSvc('svc_brand')">
+          <div class="svc-icon">✨</div>
+          <div class="svc-name">هوية بصرية</div>
+        </label>
+        <label class="service-item" id="svc_other">
+          <input type="checkbox" id="svc_other_cb" onchange="toggleSvc('svc_other')">
+          <div class="svc-icon">➕</div>
+          <div class="svc-name">أخرى</div>
+        </label>
+      </div>
+
+      <div class="section-title" style="margin-top:1.8rem">
+        <div class="dot"></div>
+        <h3>المدة والتواريخ</h3>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>تاريخ بداية العقد <span class="req">*</span></label>
+          <input type="date" id="start_date">
+        </div>
+        <div class="field">
+          <label>تاريخ انتهاء العقد <span class="req">*</span></label>
+          <input type="date" id="end_date">
+        </div>
+        <div class="field full">
+          <label>تاريخ تحرير العقد</label>
+          <input type="date" id="contract_date">
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top:1.8rem">
+        <div class="dot"></div>
+        <h3>الأتعاب والدفع</h3>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>المبلغ الإجمالي <span class="req">*</span></label>
+          <input type="number" id="total_amount" placeholder="0">
+        </div>
+        <div class="field">
+          <label>العملة</label>
+          <select id="currency">
+            <option value="دينار أردني">دينار أردني</option>
+            <option value="دولار أمريكي">دولار أمريكي</option>
+            <option value="ريال سعودي">ريال سعودي</option>
+            <option value="درهم إماراتي">درهم إماراتي</option>
+            <option value="يورو">يورو</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>الدفعة المقدمة</label>
+          <input type="number" id="advance_pct" value="50" placeholder="50"> 
+        </div>
+        <div class="field">
+          <label>نسبة الدفعة النهائية</label>
+          <input type="number" id="final_pct" value="50" placeholder="50">
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top:1.8rem">
+        <div class="dot"></div>
+        <h3>طريقة الدفع</h3>
+      </div>
+      <div class="pay-options">
+        <label class="pay-option checked" id="pay_bank">
+          <input type="radio" name="pay_method" value="تحويل بنكي" checked onchange="togglePay('pay_bank')">
+          <span class="p-icon">🏦</span>
+          <span class="p-text">تحويل بنكي</span>
+        </label>
+        <label class="pay-option" id="pay_cash">
+          <input type="radio" name="pay_method" value="كاش" onchange="togglePay('pay_cash')">
+          <span class="p-icon">💵</span>
+          <span class="p-text">كاش</span>
+        </label>
+        <label class="pay-option" id="pay_wallet">
+          <input type="radio" name="pay_method" value="محفظة إلكترونية (كليك / زين كاش)" onchange="togglePay('pay_wallet')">
+          <span class="p-icon">📲</span>
+          <span class="p-text">محفظة إلكترونية</span>
+        </label>
+        <label class="pay-option" id="pay_paypal">
+          <input type="radio" name="pay_method" value="PayPal / Wise" onchange="togglePay('pay_paypal')">
+          <span class="p-icon">💳</span>
+          <span class="p-text">PayPal / Wise</span>
+        </label>
+      </div>
+
+      <div class="section-title" style="margin-top:1.8rem">
+        <div class="dot"></div>
+        <h3>شروط إضافية (اختياري)</h3>
+      </div>
+      <div class="form-grid">
+        <div class="field full">
+          <label>ملاحظات أو شروط خاصة</label>
+          <textarea id="extra_notes" placeholder="أضف أي شروط أو ملاحظات إضافية هنا..."></textarea>
+        </div>
+      </div>
+
+    </div>
+    <div class="card-footer">
+      <button class="btn btn-outline" onclick="goStep(1)">→ رجوع</button>
+      <button class="btn btn-primary" onclick="buildPreview()">التالي ← مراجعة العقد</button>
+    </div>
+  </div>
+
+  <!-- ══ STEP 3: Preview ══ -->
+  <div class="card" id="step3">
+    <div class="card-header">
+      <div class="step-number">3</div>
+      <h2>مراجعة العقد</h2>
+      <p>تأكد من جميع التفاصيل قبل التوقيع</p>
+    </div>
+    <div class="card-body">
+      <div class="contract-preview" id="contract_preview_content"></div>
+    </div>
+    <div class="card-footer">
+      <button class="btn btn-outline" onclick="goStep(2)">→ تعديل</button>
+      <button class="btn btn-primary" onclick="goStep(4)">التالي ← التوقيع</button>
+    </div>
+  </div>
+
+  <!-- ══ STEP 4: Signatures ══ -->
+  <div class="card" id="step4">
+    <div class="card-header">
+      <div class="step-number">4</div>
+      <h2>التوقيع الإلكتروني</h2>
+      <p>وقّع بالماوس أو باللمس على الشاشة</p>
+    </div>
+    <div class="card-body">
+
+      <div class="section-title">
+        <div class="dot"></div>
+        <h3>توقيع صاحب العمل (الطرف الأول)</h3>
+      </div>
+      <div class="sig-pad-wrap">
+        <canvas id="sig1" height="150"></canvas>
+        <div class="sig-pad-actions">
+          <span>وقّع بالماوس أو اللمس</span>
+          <button onclick="clearSig(1)">مسح التوقيع</button>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top:1.5rem">
+        <div class="dot"></div>
+        <h3>توقيع المستقل (الطرف الثاني)</h3>
+      </div>
+      <div class="sig-pad-wrap">
+        <canvas id="sig2" height="150"></canvas>
+        <div class="sig-pad-actions">
+          <span>وقّع بالماوس أو اللمس</span>
+          <button onclick="clearSig(2)">مسح التوقيع</button>
+        </div>
+      </div>
+
+      <!-- صورة التصوير -->
+      <div class="section-title" style="margin-top:1.5rem">
+        <div class="dot"></div>
+        <h3>صورة توثيقية للعقد الموقّع (اختياري)</h3>
+      </div>
+      <div class="photo-upload-area" onclick="document.getElementById('contract_photo').click()">
+        <input type="file" id="contract_photo" accept="image/*" onchange="previewPhoto(this,'prevCP')">
+        <div class="icon">📷</div>
+        <p>ارفع صورة للعقد الموقّع ورقياً (اختياري للتوثيق)</p>
+        <p class="hint">JPG, PNG - حتى 10MB</p>
+      </div>
+      <div class="photo-preview-wrap" id="prevCP">
+        <button class="photo-remove" onclick="removePhoto('prevCP','contract_photo')">×</button>
+        <img id="prevCP_img" src="" alt="صورة العقد">
+      </div>
+
+      <div class="alert alert-info" style="margin-top:1.2rem">
+        💡 بعد الضغط على "تصدير PDF" ستحصل على ملف كامل يتضمن بيانات الطرفين، نصّ العقد، التوقيعات، وأي صور مرفقة.
+      </div>
+
+    </div>
+    <div class="card-footer">
+      <button class="btn btn-outline" onclick="goStep(3)">→ رجوع</button>
+      <button class="btn btn-gold" onclick="exportPDF()">⬇ تصدير PDF</button>
+    </div>
+  </div>
+
+  <!-- ══ STEP 5: Success ══ -->
+  <div class="card" id="step5">
+    <div class="card-body">
+      <div class="success-screen">
+        <div class="success-icon">✅</div>
+        <h2>تم تصدير العقد بنجاح!</h2>
+        <p>تم حفظ ملف PDF على جهازك. يمكنك الآن إرساله للطرف الآخر.</p>
+        <button class="btn btn-primary" onclick="location.reload()">إنشاء عقد جديد</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+</div><!-- /page-bg -->
+
+<script>
+// ─── Step Navigation ─────────────────────────────────────
+let currentStep = 1;
+const totalSteps = 4;
+
+function goStep(n) {
+  if (n < 1 || n > totalSteps) return;
+  document.getElementById('step' + currentStep).classList.remove('active');
+  document.getElementById('sbtn' + currentStep).classList.remove('active');
+  if (currentStep < n) document.getElementById('sbtn' + currentStep).classList.add('done');
+
+  currentStep = n;
+  document.getElementById('step' + n).classList.add('active');
+  document.getElementById('sbtn' + n).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─── Service + Pay toggles ────────────────────────────────
+function toggleSvc(id) {
+  const el = document.getElementById(id);
+  const cb = el.querySelector('input');
+  if (cb.checked) el.classList.add('checked');
+  else el.classList.remove('checked');
+}
+function togglePay(id) {
+  document.querySelectorAll('.pay-option').forEach(e => e.classList.remove('checked'));
+  document.getElementById(id).classList.add('checked');
+}
+
+// ─── Photo Upload ─────────────────────────────────────────
+function previewPhoto(input, previewId) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById(previewId + '_img').src = e.target.result;
+    document.getElementById(previewId).style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+function removePhoto(previewId, inputId) {
+  document.getElementById(previewId).style.display = 'none';
+  document.getElementById(previewId + '_img').src = '';
+  document.getElementById(inputId).value = '';
+}
+function getPhotoDataURL(inputId) {
+  const file = document.getElementById(inputId).files[0];
+  if (!file) return null;
+  return document.getElementById(inputId.replace('_file','') + '_img')?.src || null;
+}
+
+// ─── Signature Pads ───────────────────────────────────────
+function initPad(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+  canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+  let drawing = false, lastX = 0, lastY = 0;
+  ctx.strokeStyle = '#0f2240';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  function getPos(e) {
+    const r = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return [(src.clientX - r.left), (src.clientY - r.top)];
+  }
+  canvas.addEventListener('mousedown', e => { drawing = true; [lastX, lastY] = getPos(e); });
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; [lastX, lastY] = getPos(e); }, { passive: false });
+  canvas.addEventListener('mousemove', e => {
+    if (!drawing) return;
+    const [x, y] = getPos(e);
+    ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke();
+    [lastX, lastY] = [x, y];
+  });
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (!drawing) return;
+    const [x, y] = getPos(e);
+    ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke();
+    [lastX, lastY] = [x, y];
+  }, { passive: false });
+  canvas.addEventListener('mouseup', () => drawing = false);
+  canvas.addEventListener('touchend', () => drawing = false);
+}
+function clearSig(n) {
+  const canvas = document.getElementById('sig' + n);
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+}
+function isSigEmpty(n) {
+  const canvas = document.getElementById('sig' + n);
+  const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+  return !data.some(v => v !== 0);
+}
+
+window.addEventListener('load', () => {
+  initPad('sig1');
+  initPad('sig2');
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('contract_date').value = today;
+  document.getElementById('start_date').value = today;
+});
+
+// ─── Helpers ─────────────────────────────────────────────
+function v(id) { return (document.getElementById(id)?.value || '').trim(); }
+function getServices() {
+  const svcs = [];
+  const map = { svc_design_cb: 'التصميم الجرافيكي', svc_video_cb: 'المونتاج', svc_content_cb: 'إدارة المحتوى', svc_photo_cb: 'التصوير', svc_brand_cb: 'الهوية البصرية', svc_other_cb: 'خدمات أخرى' };
+  Object.entries(map).forEach(([id, name]) => { if (document.getElementById(id)?.checked) svcs.push(name); });
+  return svcs;
+}
+function getPayMethod() {
+  const el = document.querySelector('input[name="pay_method"]:checked');
+  return el ? el.value : 'تحويل بنكي';
+}
+function fmtDate(s) {
+  if (!s) return '...........';
+  const d = new Date(s);
+  return d.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+// ─── Build Preview ────────────────────────────────────────
+function buildPreview() {
+  const svcs = getServices();
+  const svcText = svcs.length ? svcs.join('، ') : 'تصميم جرافيك، مونتاج فيديو، إدارة محتوى';
+  const amt = v('total_amount') || '...........';
+  const cur = v('currency') || 'دينار أردني';
+  const adv = v('advance_pct') || '50';
+  const fin = v('final_pct') || '50';
+  const pay = getPayMethod();
+  const p1 = v('p1_name') || '...........';
+  const p2 = v('p2_name') || '...........';
+  const startD = fmtDate(v('start_date'));
+  const endD   = fmtDate(v('end_date'));
+  const contrD = fmtDate(v('contract_date'));
+  const extra  = v('extra_notes');
+
+  const extraArt = extra ? `<div class="art-title">مادة إضافية: شروط خاصة</div><p>${extra}</p>` : '';
+
+  document.getElementById('contract_preview_content').innerHTML = `
+    <h1>عقد خدمات مستقلة</h1>
+    <p class="subtitle">${svcText}</p>
+    <hr>
+
+    <div class="art-title">أطراف العقد</div>
+    <table class="parties-table">
+      <tr><td>صاحب العمل (الطرف الأول)</td><td>${p1}</td></tr>
+      ${v('p1_id') ? `<tr><td>رقم الهوية / السجل</td><td>${v('p1_id')}</td></tr>` : ''}
+      ${v('p1_phone') ? `<tr><td>الهاتف</td><td>${v('p1_phone')}</td></tr>` : ''}
+      ${v('p1_email') ? `<tr><td>البريد الإلكتروني</td><td>${v('p1_email')}</td></tr>` : ''}
+      ${v('p1_address') ? `<tr><td>العنوان</td><td>${v('p1_address')}</td></tr>` : ''}
+    </table>
+    <table class="parties-table" style="margin-top:0.5rem">
+      <tr><td>المستقل (الطرف الثاني)</td><td>${p2}</td></tr>
+      ${v('p2_id') ? `<tr><td>رقم الهوية</td><td>${v('p2_id')}</td></tr>` : ''}
+      ${v('p2_phone') ? `<tr><td>الهاتف / واتساب</td><td>${v('p2_phone')}</td></tr>` : ''}
+      ${v('p2_email') ? `<tr><td>البريد الإلكتروني</td><td>${v('p2_email')}</td></tr>` : ''}
+      ${v('p2_address') ? `<tr><td>العنوان</td><td>${v('p2_address')}</td></tr>` : ''}
+    </table>
+
+    <div class="art-title">المادة الأولى: موضوع العقد</div>
+    <p>يُنظّم هذا العقد العلاقة المهنية بين الطرفين لتقديم الخدمات التالية: <strong>${svcText}</strong></p>
+
+    <div class="art-title">المادة الثانية: مدة العقد</div>
+    <p>يبدأ سريان هذا العقد من تاريخ <strong>${startD}</strong> وينتهي بتاريخ <strong>${endD}</strong>، ويجوز تجديده بالاتفاق الكتابي المسبق.</p>
+
+    <div class="art-title">المادة الثالثة: الأتعاب والدفعات</div>
+    <div class="highlight">الأتعاب الإجمالية: <strong>${amt} ${cur}</strong></div>
+    <p>▪  دفعة مقدّمة: <strong>${adv}%</strong> عند توقيع العقد.</p>
+    <p>▪  دفعة نهائية: <strong>${fin}%</strong> عند تسليم كامل المشروع.</p>
+    <p>▪  طريقة الدفع: <strong>${pay}</strong></p>
+    <p>في حال التأخر في السداد أكثر من 7 أيام عمل، يحق للطرف الثاني تعليق العمل.</p>
+
+    <div class="art-title">المادة الرابعة: التسليمات والمراجعات</div>
+    <p>يلتزم الطرف الثاني بتسليم الأعمال في المواعيد المتفق عليها. يُمنح الطرف الأول حق التعديل بحد أقصى <strong>مرتين (2)</strong> لكل تصميم أو مقطع، وأي تعديل إضافي يُحتسب بسعر إضافي متفق عليه مسبقاً.</p>
+
+    <div class="art-title">المادة الخامسة: حقوق الملكية الفكرية</div>
+    <p>تنتقل ملكية التصاميم والمواد المسلّمة إلى الطرف الأول كاملةً بعد استلام الدفعة النهائية. يحتفظ الطرف الثاني بحق عرض الأعمال في محفظته المهنية. تبقى الملفات المصدرية ملكاً للطرف الثاني ما لم يُنص على خلاف ذلك.</p>
+
+    <div class="art-title">المادة السادسة: السرية وعدم الإفصاح</div>
+    <p>يلتزم الطرف الثاني بالحفاظ على سرية المعلومات التجارية لمدة سنتين بعد انتهاء العقد.</p>
+
+    <div class="art-title">المادة السابعة: إنهاء العقد</div>
+    <p>يجوز إنهاء العقد بإشعار كتابي مسبق لا يقل عن <strong>14 يوم عمل</strong>. في حال الإنهاء من الطرف الأول يستحق الطرف الثاني أتعاب العمل المنجز كاملاً.</p>
+
+    <div class="art-title">المادة الثامنة: تسوية النزاعات</div>
+    <p>يُحاوَل حل النزاعات ودياً خلال 14 يوماً، وفي حال التعذّر يُحكم بالقانون الأردني المعمول به.</p>
+
+    ${extraArt}
+
+    <hr class="hr-light">
+    <p style="text-align:center;font-size:0.85rem;color:#999">تاريخ التحرير: ${contrD}</p>
+
+    <table class="sig-table">
+      <tr>
+        <td>
+          <div class="sig-title">توقيع المستقل (الطرف الثاني)</div>
+          <div class="sig-area" id="preview_sig2_area"><span style="color:#ccc;font-size:0.8rem">يُضاف عند التوقيع</span></div>
+          <div style="font-size:0.82rem;margin-top:0.4rem">${p2}</div>
+        </td>
+        <td>
+          <div class="sig-title">توقيع صاحب العمل (الطرف الأول)</div>
+          <div class="sig-area" id="preview_sig1_area"><span style="color:#ccc;font-size:0.8rem">يُضاف عند التوقيع</span></div>
+          <div style="font-size:0.82rem;margin-top:0.4rem">${p1}</div>
+        </td>
+      </tr>
+    </table>
+  `;
+
+  goStep(3);
+}
+
+// ─── Export PDF ───────────────────────────────────────────
+async function exportPDF() {
+  // Inject signatures into preview
+  const area1 = document.getElementById('preview_sig1_area');
+  const area2 = document.getElementById('preview_sig2_area');
+  if (area1 && !isSigEmpty(1)) {
+    area1.innerHTML = `<img class="sig-img" src="${document.getElementById('sig1').toDataURL()}">`;
+  }
+  if (area2 && !isSigEmpty(2)) {
+    area2.innerHTML = `<img class="sig-img" src="${document.getElementById('sig2').toDataURL()}">`;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+  const W = 210, margin = 12, contentW = W - margin * 2;
+  const el = document.getElementById('contract_preview_content');
+
+  const canvas = await html2canvas(el, {
+    scale: 2, useCORS: true, backgroundColor: '#ffffff',
+    width: el.offsetWidth, windowWidth: el.offsetWidth
+  });
+  const imgData = canvas.toDataURL('image/jpeg', 0.92);
+  const imgH = (canvas.height / canvas.width) * contentW;
+  const pageH = 297 - margin * 2;
+  let yPos = 0;
+  let page = 1;
+  while (yPos < imgH) {
+    if (page > 1) pdf.addPage();
+    pdf.addImage(imgData, 'JPEG', margin, margin, contentW, imgH, '', 'FAST', 0);
+    pdf.setPage(page);
+    // clip to page
+    if (imgH - yPos > pageH) {
+      pdf.setFillColor(255,255,255);
+      pdf.rect(0, margin + pageH, W, imgH - yPos - pageH + margin, 'F');
+    }
+    yPos += pageH;
+    page++;
+    break; // single-pass for reliability
+  }
+
+  // If contract photo exists, add as extra page
+  const cpImg = document.getElementById('prevCP_img');
+  if (cpImg && cpImg.src && cpImg.src !== window.location.href) {
+    pdf.addPage();
+    pdf.setFontSize(14);
+    pdf.setTextColor(26, 53, 96);
+    pdf.text('صورة العقد الموقّع', W - margin, 20, { align: 'right' });
+    try {
+      const cpCanvas = await html2canvas(document.getElementById('prevCP'), { scale: 1.5, useCORS: true });
+      const cpData = cpCanvas.toDataURL('image/jpeg', 0.88);
+      const cpW = contentW, cpH = Math.min((cpCanvas.height/cpCanvas.width)*cpW, 220);
+      pdf.addImage(cpData, 'JPEG', margin, 28, cpW, cpH);
+    } catch(e) {}
+  }
+
+  // ID photos
+  const idImgs = [
+    { el: document.getElementById('prev1_img'), label: 'صورة هوية صاحب العمل' },
+    { el: document.getElementById('prev2_img'), label: 'صورة هوية المستقل' },
+  ];
+  for (const { el: imgEl, label } of idImgs) {
+    if (imgEl && imgEl.src && imgEl.src !== window.location.href && imgEl.src.startsWith('data:')) {
+      pdf.addPage();
+      pdf.setFontSize(13);
+      pdf.setTextColor(26, 53, 96);
+      pdf.text(label, W - margin, 20, { align: 'right' });
+      try {
+        const iW = contentW, iH = Math.min(180, contentW * 0.65);
+        pdf.addImage(imgEl.src, 'JPEG', margin, 28, iW, iH);
+      } catch(e) {}
+    }
+  }
+
+  const p2name = v('p2_name') || 'contract';
+  pdf.save(`عقد_${p2name.replace(/\s+/g,'_')}.pdf`);
+
+  // Show success
+  document.getElementById('step' + currentStep).classList.remove('active');
+  document.getElementById('step5').classList.add('active');
+  ['sbtn1','sbtn2','sbtn3','sbtn4'].forEach(id => {
+    document.getElementById(id).classList.remove('active');
+    document.getElementById(id).classList.add('done');
+  });
+}
+</script>
+</body>
+</html>
